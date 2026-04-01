@@ -184,11 +184,16 @@ game_code = f"""
             }}
         }});
         if(cow.y < 250) {{
-            let diff = 250 - cow.y; cow.y = 250;
+            let diff = 250 - cow.y; 
+            cow.y = 250;
             altitude += diff / 5;
             platforms.forEach(p => {{
                 p.y += diff;
-                if(p.y > 600) {{ p.y = -20; p.x = Math.random() * 280 + 10; }}
+                // --- 修正箇所：画面下に消えたら、十分な高さ（マイナス方向）に再配置 ---
+                if(p.y > 600) {{ 
+                    p.y -= 600; // 画面の高さ分だけ上に戻す
+                    p.x = Math.random() * 300; 
+                }}
             }});
         }}
         cowBox.style.left = cow.x + 'px';
