@@ -154,15 +154,18 @@ game_code = f"""
     let isPaused = false;
     let keys = {{}};
     function init() {
-        // 最初の足場を牛(x:175)の真下に固定で配置して落下死を防ぐ
-        platforms.push({ x: 150, y: 500, w: 100 });
-        
-        // 残りの5つを上の階層に生成
-        for(let i=1; i<6; i++) {
-            spawnPlatform(500 - (i * 110));
-        }
-        loop();
-    }
+    platforms.push({ x: 150, y: 500, w: 100 });
+    // ...
+}
+
+// 修正後（すべての波括弧を2重にする）
+function init() {{
+    platforms.push({{ x: 150, y: 500, w: 100 }});
+    for(let i=1; i<6; i++) {{
+        spawnPlatform(500 - (i * 110));
+    }}
+    loop();
+}}
 
     function spawnPlatform(y) {
         // 横幅400pxから足場の幅100pxを引いた範囲でランダム配置
