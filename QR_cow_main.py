@@ -153,13 +153,21 @@ game_code = f"""
     let altitude = 0;
     let isPaused = false;
     let keys = {{}};
-    function init() {{
-        for(let i=0; i<6; i++) spawnPlatform(550 - (i * 110));
+    function init() {
+        // 最初の足場を牛(x:175)の真下に固定で配置して落下死を防ぐ
+        platforms.push({ x: 150, y: 500, w: 100 });
+        
+        // 残りの5つを上の階層に生成
+        for(let i=1; i<6; i++) {
+            spawnPlatform(500 - (i * 110));
+        }
         loop();
-    }}
-    function spawnPlatform(y) {{
-        platforms.push({{ x: Math.random() * 280 + 10, y: y, w: 100 }});
-    }}
+    }
+
+    function spawnPlatform(y) {
+        // 横幅400pxから足場の幅100pxを引いた範囲でランダム配置
+        platforms.push({ x: Math.random() * 300, y: y, w: 100 });
+    }
     function togglePause() {{
         isPaused = !isPaused;
         pauseOverlay.style.display = isPaused ? 'flex' : 'none';
