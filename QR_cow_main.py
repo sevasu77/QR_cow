@@ -116,7 +116,7 @@ game_code = f"""
     const altDisp = document.getElementById('altitude');
     const nvdaChange = {nvda_change};
     let gravity = 0.4 * (1 - (nvdaChange / 15));
-    let jumpPower = -12 * (1 + (nvdaChange / 40));
+    let jumpPower = -12 * (1 + (nvdaChange / 80));
     
     if(nvdaChange >= 0) {{
         cowBox.classList.add('bull-mode');
