@@ -1,21 +1,23 @@
-
 import streamlit as st
 import yfinance as yf
+
 # --- 1. Python側：市場データ取得 (yfinance) ---
-@st.cache_data(ttl=3600)  # 1時間キャッシュでAPI制限を回避
+@st.cache_data(ttl=3600)  # 1時間キャッシュ
 def get_nvda_market_data():
     try:
         nvda = yf.Ticker("NVDA")
         hist = nvda.history(period="2d")
         if len(hist) < 2:
-            return 1.02  # 週末や取得エラー時のデフォルト値
+            return 1.02  # デフォルト値
         prev_close = hist['Close'].iloc[-2]
         current_price = hist['Close'].iloc[-1]
         change = ((current_price - prev_close) / prev_close) * 100
         return round(change, 2)
     except:
         return 1.02
+
 nvda_change = get_nvda_market_data()
+
 # --- 2. HTML/JavaScript/CSS 統合コード ---
 game_code = f"""
 <!DOCTYPE html>
@@ -34,7 +36,6 @@ game_code = f"""
             margin: auto; border: 4px solid #fff; border-radius: 20px; 
             overflow: hidden;
         }}
-        
         #cow-container {{ 
             position: absolute; z-index: 10; display: flex; 
             align-items: center; justify-content: center;
@@ -72,7 +73,6 @@ game_code = f"""
             position: absolute; height: 12px; background: #00ffcc; 
             border-radius: 6px; box-shadow: 0 0 15px #00ffcc; 
         }}
-        
         #ui {{ 
             position: absolute; top: 15px; left: 15px; z-index: 100; 
             background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; font-size: 12px;
@@ -114,9 +114,11 @@ game_code = f"""
     const qrLarge = document.getElementById('qr-holder-large');
     const pauseOverlay = document.getElementById('pause-overlay');
     const altDisp = document.getElementById('altitude');
+    
+    // --- 市場パラメータ ---
     const nvdaChange = {nvda_change};
-    let gravity = 0.4 * (1 - (nvdaChange / 15));
-    let jumpPower = -12 * (1 + (nvdaChange / 80));
+    let gravity = 0.4 * (1 - (nvdaChange / 20));
+    let jumpPower = -11 * (1 + (nvdaChange / 100)); // ジャンプ力をマイルドに調整
     
     if(nvdaChange >= 0) {{
         cowBox.classList.add('bull-mode');
@@ -124,9 +126,13 @@ game_code = f"""
         cowBox.classList.add('bear-mode');
         qrMini.classList.add('market-alert');
     }}
+
+    // QRコード生成
     const irUrl = "https://www.asml.com/en/investors";
     new QRCode(qrMini, {{ text: irUrl, width: 18, height: 18, correctLevel: QRCode.CorrectLevel.L }});
     new QRCode(qrLarge, {{ text: irUrl, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.H }});
+
+    // サウンド
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playMoo() {{
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -141,23 +147,29 @@ game_code = f"""
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.4);
     }}
+
+    // ゲーム変数
     let cow = {{ x: 175, y: 300, vx: 0, vy: 0 }};
     let platforms = [];
     let altitude = 0;
     let isPaused = false;
     let keys = {{}};
 
+    // 初期化
     function init() {{
-        // 最初の足場を固定
+        // 足場を6つ生成（1つ目は牛の真下）
         platforms.push({{ x: 150, y: 500, w: 100 }});
         for(let i=1; i<6; i++) {{
-            spawnPlatform(500 - (i * 110));
+            platforms.push({{ x: Math.random() * 300, y: 500 - (i * 110), w: 100 }});
         }}
+        // 足場要素をDOMに作成
+        platforms.forEach((p, i) => {{
+            const el = document.createElement('div');
+            el.className = 'platform';
+            el.id = 'plt-' + i;
+            container.appendChild(el);
+        }});
         loop();
-    }}
-
-    function spawnPlatform(y) {{
-        platforms.push({{ x: Math.random() * 300, y: y, w: 100 }});
     }}
 
     function togglePause() {{
@@ -165,17 +177,24 @@ game_code = f"""
         pauseOverlay.style.display = isPaused ? 'flex' : 'none';
         if(!isPaused) loop();
     }}
+
     function loop() {{
         if(isPaused) return;
+
         cow.vy += gravity;
         cow.y += cow.vy;
+
         if(keys['ArrowLeft']) cow.x -= 7;
         if(keys['ArrowRight']) cow.x += 7;
+
         if(cow.x < -30) cow.x = 380; if(cow.x > 380) cow.x = -30;
+
         if(cow.y > 600) {{
             alert("MARKET CRASH! Alt: " + Math.floor(altitude) + "m");
             location.reload(); return;
         }}
+
+        // 当たり判定
         platforms.forEach(p => {{
             if(cow.vy > 0 && cow.x + 35 > p.x && cow.x < p.x + p.w &&
                cow.y + 50 > p.y && cow.y + 50 < p.y + 15) {{
@@ -183,40 +202,45 @@ game_code = f"""
                 playMoo();
             }}
         }});
+
+        // スクロール処理
         if(cow.y < 250) {{
             let diff = 250 - cow.y; 
             cow.y = 250;
             altitude += diff / 5;
             platforms.forEach(p => {{
                 p.y += diff;
-                // --- 修正箇所：画面下に消えたら、十分な高さ（マイナス方向）に再配置 ---
+                // 足場が下に消えたら上へ戻す（無限ループ）
                 if(p.y > 600) {{ 
-                    p.y -= 600; // 画面の高さ分だけ上に戻す
+                    p.y -= 600; 
                     p.x = Math.random() * 300; 
                 }}
             }});
         }}
+
+        // 表示更新
         cowBox.style.left = cow.x + 'px';
         cowBox.style.top = cow.y + 'px';
         altDisp.innerText = Math.floor(altitude);
-        render();
+        
+        platforms.forEach((p, i) => {{
+            const el = document.getElementById('plt-' + i);
+            if(el) {{
+                el.style.left = p.x + 'px';
+                el.style.top = p.y + 'px';
+                el.style.width = p.w + 'px';
+            }}
+        }});
+
         requestAnimationFrame(loop);
     }}
-    function render() {{
-        const old = document.querySelectorAll('.platform');
-        old.forEach(o => o.remove());
-        platforms.forEach(p => {{
-            const el = document.createElement('div');
-            el.className = 'platform';
-            el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; el.style.width = p.w + 'px';
-            document.getElementById('game-container').appendChild(el);
-        }});
-    }}
+
     window.addEventListener('keydown', e => {{
         keys[e.key] = true;
         if(e.key.toLowerCase() === 'p') togglePause();
     }});
     window.addEventListener('keyup', e => keys[e.key] = false);
+    
     init();
 </script>
 </body>
