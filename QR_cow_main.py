@@ -160,17 +160,19 @@ game_code = f"""
 
 // 修正後（すべての波括弧を2重にする）
 function init() {{
-    platforms.push({{ x: 150, y: 500, w: 100 }});
-    for(let i=1; i<6; i++) {{
-        spawnPlatform(500 - (i * 110));
+        // すべて 2重の波括弧にする
+        platforms.push({{ x: 150, y: 500, w: 100 }});
+        
+        for(let i=1; i<6; i++) {{
+            spawnPlatform(500 - (i * 110));
+        }}
+        loop();
     }}
-    loop();
-}}
 
-    function spawnPlatform(y) {
-        // 横幅400pxから足場の幅100pxを引いた範囲でランダム配置
-        platforms.push({ x: Math.random() * 300, y: y, w: 100 });
-    }
+    function spawnPlatform(y) {{
+        // ここも 2重にする
+        platforms.push({{ x: Math.random() * 300, y: y, w: 100 }});
+    }}
     function togglePause() {{
         isPaused = !isPaused;
         pauseOverlay.style.display = isPaused ? 'flex' : 'none';
