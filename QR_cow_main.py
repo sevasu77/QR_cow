@@ -40,13 +40,11 @@ game_code = f"""
             align-items: center; justify-content: center;
         }}
         #cow {{ font-size: 50px; user-select: none; line-height: 1; }}
-        /* 💾 背中の極小QRチップ */
         #qr-holder-mini {{
             position: absolute; top: 5px; right: 8px;
             width: 18px; height: 18px; background: white;
             padding: 1px; border: 1px solid #333; border-radius: 2px;
         }}
-        /* 📊 ポーズ画面（分析モード） */
         #pause-overlay {{
             position: absolute; inset: 0; background: rgba(0,0,0,0.85);
             display: none; z-index: 1500; align-items: center; justify-content: center;
@@ -60,7 +58,6 @@ game_code = f"""
             background: white; padding: 10px; display: inline-block;
             margin: 15px 0; border-radius: 8px;
         }}
-        /* 警告点滅（株価マイナス時） */
         .market-alert {{
             animation: blink 0.5s infinite alternate;
             border-color: red !important;
@@ -82,7 +79,7 @@ game_code = f"""
             border: 1px solid #444;
         }}
         .market-val {{ 
-            color: { '#00ff00' if nvda_change >= 0 else '#ff00ff' }; 
+            color: {{ '#00ff00' if nvda_change >= 0 else '#ff00ff' }}; 
             font-weight: bold; 
         }}
     </style>
@@ -117,7 +114,6 @@ game_code = f"""
     const qrLarge = document.getElementById('qr-holder-large');
     const pauseOverlay = document.getElementById('pause-overlay');
     const altDisp = document.getElementById('altitude');
-    // --- 💥 市場パラメータ ---
     const nvdaChange = {nvda_change};
     let gravity = 0.4 * (1 - (nvdaChange / 15));
     let jumpPower = -12 * (1 + (nvdaChange / 40));
@@ -128,11 +124,9 @@ game_code = f"""
         cowBox.classList.add('bear-mode');
         qrMini.classList.add('market-alert');
     }}
-    // --- 🔗 QRコード生成 (ミニ & 巨大) ---
     const irUrl = "https://www.asml.com/en/investors";
     new QRCode(qrMini, {{ text: irUrl, width: 18, height: 18, correctLevel: QRCode.CorrectLevel.L }});
     new QRCode(qrLarge, {{ text: irUrl, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.H }});
-    // --- 🔊 サウンドエンジン ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playMoo() {{
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -147,22 +141,15 @@ game_code = f"""
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.4);
     }}
-    // --- 🕹️ ゲームロジック ---
     let cow = {{ x: 175, y: 300, vx: 0, vy: 0 }};
     let platforms = [];
     let altitude = 0;
     let isPaused = false;
     let keys = {{}};
-    function init() {
-    platforms.push({ x: 150, y: 500, w: 100 });
-    // ...
-}
 
-// 修正後（すべての波括弧を2重にする）
-function init() {{
-        // すべて 2重の波括弧にする
+    function init() {{
+        // 最初の足場を固定
         platforms.push({{ x: 150, y: 500, w: 100 }});
-        
         for(let i=1; i<6; i++) {{
             spawnPlatform(500 - (i * 110));
         }}
@@ -170,9 +157,9 @@ function init() {{
     }}
 
     function spawnPlatform(y) {{
-        // ここも 2重にする
         platforms.push({{ x: Math.random() * 300, y: y, w: 100 }});
     }}
+
     function togglePause() {{
         isPaused = !isPaused;
         pauseOverlay.style.display = isPaused ? 'flex' : 'none';
@@ -230,5 +217,6 @@ function init() {{
 </body>
 </html>
 """
+
 st.set_page_config(page_title="NVDA Cow Jump", layout="centered")
 st.components.v1.html(game_code, height=650)
